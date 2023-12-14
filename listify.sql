@@ -1,3 +1,6 @@
+# drop database listify_bdd;
+create database listify_bdd;
+use listify_bdd;
 
 create table project
 (
