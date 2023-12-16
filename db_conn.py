@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, ForeignKey
 from sqlalchemy.orm import declarative_base, Session, relationship
+from fastapi import HTTPException
 
 
 Base = declarative_base()
@@ -65,7 +66,26 @@ class DBConnection:
                     repository_dict['tasks'].append(task_dict)
                 project_dict['repositories'].append(repository_dict)
             project_id_to_dict[project.project_id] = project_dict
+        if not project_id_to_dict.get(project_id):
+            return HTTPException(status_code=404, detail="Project not found")
         return project_id_to_dict.get(project_id)
+
+    def delete_element_by_id(self, element_type, element_id):
+        try:
+            element_class = globals().get(element_type)
+            if element_class:
+                element = self.session.query(element_class).get(element_id)
+                if element:
+                    self.session.delete(element)
+                    self.session.commit()
+                    return {"message": "Deleted successfully", "element_type": element_type, "element_id": element_id}
+                else:
+                    return HTTPException(status_code=404, detail=f"{element_type} with id {element_id} not found")
+            else:
+                print(f"Invalid element type: {element_type}")
+        except Exception as e:
+            self.session.rollback()
+            return HTTPException(status_code=500, detail=f"Error deleting {element_type} with ID {element_id}: {e}")
 
     def session_close(self):
         self.session.close()

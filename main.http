@@ -27,3 +27,9 @@ Accept: application/json
 
 GET http://127.0.0.1:8000/get/project/4
 Accept: application/json
+
+###
+
+DELETE http://127.0.0.1:8000/delete/project/3
+Accept: application/json
+
