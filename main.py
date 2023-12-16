@@ -1,7 +1,8 @@
 from fastapi import FastAPI
-from get_proj_by_id import get_project_dict_by_id
+from db_conn import DBConnection
 
 app = FastAPI()
+db = DBConnection("mysql://root:vm@vm.lan/listify_bdd")
 
 
 @app.get("/")
@@ -16,4 +17,4 @@ async def say_hello(name: str):
 
 @app.get("/get/project/{id}")
 async def say_hello(id: int):
-    return get_project_dict_by_id(id)
+    return db.get_project_dict_by_id(id)
