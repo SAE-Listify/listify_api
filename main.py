@@ -8,29 +8,22 @@ db = DBConnection("mysql://root:vm@vm.lan/listify_bdd")
 
 # Base Models for create & update
 class SubtaskPydantic(BaseModel):
-    subtask_id: int
-    task_id: int
     name: str
     completed: bool
 
 
 class TaskPydantic(BaseModel):
-    task_id: int
-    repository_id: int
     name: str
     completed: bool
     subtasks: list[SubtaskPydantic] = []
 
 
 class RepositoryPydantic(BaseModel):
-    repository_id: int
-    project_id: int
     name: str
     tasks: list[TaskPydantic] = []
 
 
 class ProjectPydantic(BaseModel):
-    project_id: int
     name: str
     repositories: list[RepositoryPydantic] = []
 
@@ -43,6 +36,12 @@ async def root():
 @app.get("/hello/{name}")
 async def say_hello(name: str):
     return {"message": f"Hello {name}"}
+
+
+# ---- CREATE
+@app.post("/upload/project")
+async def upload_project(project: ProjectPydantic):
+    return db.add_project(project.dict())
 
 
 # ---- READ

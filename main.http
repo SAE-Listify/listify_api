@@ -33,3 +33,35 @@ Accept: application/json
 DELETE http://127.0.0.1:8000/delete/project/3
 Accept: application/json
 
+###
+
+POST http://127.0.0.1:8000/upload/project
+Content-Type: application/json
+
+{
+        "name": "TheProject",
+        "repositories": [
+            {
+                "name": "Repo1",
+                "tasks": [
+                    {
+                        "name": "Task1",
+                        "completed": true,
+                        "subtasks": [
+                            {"name": "Subtask1", "completed": true},
+                            {"name": "Subtask2", "completed": true}
+                        ]
+                    },
+                    {
+                        "name": "Task2",
+                        "completed": true,
+                        "subtasks": [
+                            {"name": "Subtask1", "completed": true}
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+
+###

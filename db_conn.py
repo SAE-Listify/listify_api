@@ -8,14 +8,14 @@ Base = declarative_base()
 
 class Project(Base):
     __tablename__ = 'project'
-    project_id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255))
     repositories = relationship('Repository', back_populates='project')
 
 
 class Repository(Base):
     __tablename__ = 'repository'
-    repository_id = Column(Integer, primary_key=True)
+    repository_id = Column(Integer, primary_key=True, autoincrement=True)
     project_id = Column(Integer, ForeignKey('project.project_id'))
     name = Column(String(255))
     tasks = relationship('Task', back_populates='repository')
@@ -24,7 +24,7 @@ class Repository(Base):
 
 class Task(Base):
     __tablename__ = 'task'
-    task_id = Column(Integer, primary_key=True)
+    task_id = Column(Integer, primary_key=True, autoincrement=True)
     repository_id = Column(Integer, ForeignKey('repository.repository_id'))
     name = Column(String(255))
     completed = Column(Boolean)
@@ -34,7 +34,7 @@ class Task(Base):
 
 class Subtask(Base):
     __tablename__ = 'subtask'
-    subtask_id = Column(Integer, primary_key=True)
+    subtask_id = Column(Integer, primary_key=True, autoincrement=True)
     task_id = Column(Integer, ForeignKey('task.task_id'))
     name = Column(String(255))
     completed = Column(Boolean)
@@ -42,7 +42,16 @@ class Subtask(Base):
 
 
 class DBConnection:
+    """
+    Database connection
+    TIL ChatGPT is very good at creating docstrings!
+    """
     def __init__(self, conn_string: str = "mysql://root:root@localhost/listify_bdd"):
+        """
+        Initializes a DBConnection object with a database connection string.
+
+        :param conn_string: The connection string for the database.
+        """
         # TODO: this is a test local sql database, to change
         engine = create_engine(conn_string, echo=True)
         Base.metadata.create_all(engine)
@@ -51,6 +60,12 @@ class DBConnection:
         self.session = Session(engine)
 
     def get_project_dict_by_id(self, project_id):
+        """
+        Retrieves a dictionary representation of a project by its ID, including its repositories, tasks, and subtasks.
+
+        :param project_id: The ID of the project to retrieve.
+        :return: A dictionary representation of the project or an HTTPException if the project is not found.
+        """
         # Query for the project and its related entities
         project_id_to_dict = {}
         projects = self.session.query(Project).all()
@@ -71,6 +86,13 @@ class DBConnection:
         return project_id_to_dict.get(project_id)
 
     def delete_element_by_id(self, element_type, element_id):
+        """
+        Deletes an element of the specified type by its ID.
+
+        :param element_type: The type of the element to delete (e.g., 'Project', 'Repository', 'Task', 'Subtask').
+        :param element_id: The ID of the element to delete.
+        :return: A dictionary with a message indicating success or an HTTPException if the element is not found or an error occurs.
+        """
         try:
             element_class = globals().get(element_type)
             if element_class:
@@ -87,6 +109,56 @@ class DBConnection:
             self.session.rollback()
             return HTTPException(status_code=500, detail=f"Error deleting {element_type} with ID {element_id}: {e}")
 
+    def add_project(self, project_data):
+        """
+        Adds a project to the database using the provided project data.
+
+        :param project_data: A dictionary containing the project data, including repositories, tasks, and subtasks.
+        :return: A dictionary with a message indicating success and the ID of the added project or an HTTPException if an error occurs.
+        """
+        try:
+            # Extract project information
+            project_info = project_data.copy()
+            repositories_data = project_info.pop("repositories", [])
+
+            # Create the Project instance
+            project = Project(**project_info)
+            self.session.add(project)
+
+            # Create Repository instances and associate them with the project
+            for repository_data in repositories_data:
+                tasks_data = repository_data.pop("tasks", [])
+
+                repository = Repository(**repository_data)
+                repository.project = project  # Associate the repository with the project
+                self.session.add(repository)
+
+                # Create Task instances and associate them with the repository
+                for task_data in tasks_data:
+                    subtasks_data = task_data.pop("subtasks", [])
+
+                    task = Task(**task_data)
+                    task.repository = repository  # Associate the task with the repository
+                    self.session.add(task)
+
+                    # Create Subtask instances and associate them with the task
+                    for subtask_data in subtasks_data:
+                        subtask = Subtask(**subtask_data)
+                        subtask.task = task  # Associate the subtask with the task
+                        self.session.add(subtask)
+
+            self.session.commit()
+            return {
+                "message": f"Project '{project.name}' added successfully with ID {project.project_id}",
+                "project_id": project.project_id
+            }
+        except Exception as e:
+            self.session.rollback()
+            return HTTPException(status_code=500, detail=f"Error adding project: {e}")
+
     def session_close(self):
+        """
+         Closes the database session.
+         """
         self.session.close()
 
