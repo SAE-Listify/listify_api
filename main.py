@@ -45,6 +45,11 @@ async def get_project(id: int):
     return db.get_project_dict_by_id(id)
 
 
+@app.get("/get/all_projects")
+async def get_all_projects():
+    return db.get_projects_list()
+
+
 # --- UPDATE
 @app.post("/update/project/{id}")
 async def update_project(project: ProjectPydantic, id: int):

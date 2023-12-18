@@ -76,7 +76,7 @@ Content-Type: application/json
 
 ###
 
-POST http://127.0.0.1:8000/update/project/5
+POST http://127.0.0.1:8000/update/project/1
 Content-Type: application/json
 
 {
@@ -85,3 +85,37 @@ Content-Type: application/json
     }
 
 ###
+
+POST http://127.0.0.1:8000/update/project/1
+Content-Type: application/json
+
+{
+        "name": "ThePostProject",
+        "repositories": [
+            {
+                "name": "Repo1Post",
+                "tasks": [
+                    {
+                        "name": "Task1Post",
+                        "completed": true,
+                        "subtasks": [
+                            {"name": "Subtask1", "completed": true},
+                            {"name": "Subtask2", "completed": true}
+                        ]
+                    },
+                    {
+                        "name": "Task2Post",
+                        "completed": true,
+                        "subtasks": [
+                            {"name": "Subtask1", "completed": true}
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+
+###
+
+GET http://127.0.0.1:8000/get/all_projects
+Accept: application/json

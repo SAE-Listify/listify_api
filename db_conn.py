@@ -59,6 +59,25 @@ class DBConnection:
         # Create a session
         self.session = Session(engine)
 
+    def get_projects_list(self):
+        """
+        Retrieves a list of projects with their names and IDs.
+
+        :return: A list of dictionaries, where each dictionary contains 'project_id' and 'name'.
+        """
+        try:
+            # Query for the projects
+            projects = self.session.query(Project).all()
+
+            # Create a list of dictionaries with project information
+            projects_list = [
+                {'project_id': project.project_id, 'name': project.name} for project in projects
+            ]
+
+            return projects_list
+        except Exception as e:
+            return HTTPException(status_code=500, detail=f"Error retrieving projects list: {e}")
+
     def get_project_dict_by_id(self, project_id):
         """
         Retrieves a dictionary representation of a project by its ID, including its repositories, tasks, and subtasks.
@@ -109,6 +128,28 @@ class DBConnection:
             self.session.rollback()
             return HTTPException(status_code=500, detail=f"Error deleting {element_type} with ID {element_id}: {e}")
 
+    def create_project_children(self, repositories_data, project):
+        for repository_data in repositories_data:
+            tasks_data = repository_data.pop("tasks", [])
+
+            repository = Repository(**repository_data)
+            repository.project = project  # Associate the repository with the project
+            self.session.add(repository)
+
+            # Create Task instances and associate them with the repository
+            for task_data in tasks_data:
+                subtasks_data = task_data.pop("subtasks", [])
+
+                task = Task(**task_data)
+                task.repository = repository  # Associate the task with the repository
+                self.session.add(task)
+
+                # Create Subtask instances and associate them with the task
+                for subtask_data in subtasks_data:
+                    subtask = Subtask(**subtask_data)
+                    subtask.task = task  # Associate the subtask with the task
+                    self.session.add(subtask)
+
     def add_project(self, project_data):
         """
         Adds a project to the database using the provided project data.
@@ -126,27 +167,9 @@ class DBConnection:
             self.session.add(project)
 
             # Create Repository instances and associate them with the project
-            for repository_data in repositories_data:
-                tasks_data = repository_data.pop("tasks", [])
+            self.create_project_children(repositories_data, project)
 
-                repository = Repository(**repository_data)
-                repository.project = project  # Associate the repository with the project
-                self.session.add(repository)
-
-                # Create Task instances and associate them with the repository
-                for task_data in tasks_data:
-                    subtasks_data = task_data.pop("subtasks", [])
-
-                    task = Task(**task_data)
-                    task.repository = repository  # Associate the task with the repository
-                    self.session.add(task)
-
-                    # Create Subtask instances and associate them with the task
-                    for subtask_data in subtasks_data:
-                        subtask = Subtask(**subtask_data)
-                        subtask.task = task  # Associate the subtask with the task
-                        self.session.add(subtask)
-
+            # Commit to the database
             self.session.commit()
             return {
                 "message": f"Project '{project.name}' added successfully with ID {project.project_id}",
@@ -180,29 +203,11 @@ class DBConnection:
                 project.name = new_project_info.get("name", project.name)
 
                 # Create new Repository instances and associate them with the project
-                for new_repository_data in new_repositories_data:
-                    new_tasks_data = new_repository_data.pop("tasks", [])
+                self.create_project_children(new_repositories_data, project)
 
-                    new_repository = Repository(**new_repository_data)
-                    new_repository.project = project  # Associate the new repository with the project
-                    self.session.add(new_repository)
-
-                    # Create new Task instances and associate them with the new repository
-                    for new_task_data in new_tasks_data:
-                        new_subtasks_data = new_task_data.pop("subtasks", [])
-
-                        new_task = Task(**new_task_data)
-                        new_task.repository = new_repository  # Associate the new task with the new repository
-                        self.session.add(new_task)
-
-                        # Create new Subtask instances and associate them with the new task
-                        for new_subtask_data in new_subtasks_data:
-                            new_subtask = Subtask(**new_subtask_data)
-                            new_subtask.task = new_task  # Associate the new subtask with the new task
-                            self.session.add(new_subtask)
-
+                # Commit to the database
                 self.session.commit()
-                return {"message": f"Project with ID {project_id} overwritten successfully"}
+                return {"message": f"Project overwritten successfully", "project_id": project_id}
             else:
                 return HTTPException(status_code=404, detail=f"Project with ID {project_id} not found")
         except Exception as e:
