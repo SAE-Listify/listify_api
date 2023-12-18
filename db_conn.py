@@ -63,7 +63,8 @@ class DBConnection:
         """
         Retrieves a list of projects with their names and IDs.
 
-        :return: A list of dictionaries, where each dictionary contains 'project_id' and 'name'.
+        :return: The list of projects in the following format:
+        {"project_id": 1, "name": "TheProject"}
         """
         try:
             # Query for the projects
@@ -80,10 +81,10 @@ class DBConnection:
 
     def get_project_dict_by_id(self, project_id):
         """
-        Retrieves a dictionary representation of a project by its ID, including its repositories, tasks, and subtasks.
+        Retrieves a dict representation of a project by its ID, including its repositories, tasks, and subtasks.
 
         :param project_id: The ID of the project to retrieve.
-        :return: A dictionary representation of the project or an HTTPException if the project is not found.
+        :return: A dict representation of the project or an HTTPException if the project is not found.
         """
         # Query for the project and its related entities
         project_id_to_dict = {}
@@ -100,17 +101,17 @@ class DBConnection:
                     repository_dict['tasks'].append(task_dict)
                 project_dict['repositories'].append(repository_dict)
             project_id_to_dict[project.project_id] = project_dict
-        if not project_id_to_dict.get(project_id):
+        if not project_id_to_dict[project_id]:
             return HTTPException(status_code=404, detail="Project not found")
-        return project_id_to_dict.get(project_id)
+        return project_id_to_dict[project_id]
 
     def delete_element_by_id(self, element_type, element_id):
         """
         Deletes an element of the specified type by its ID.
 
-        :param element_type: The type of the element to delete (e.g., 'Project', 'Repository', 'Task', 'Subtask').
+        :param element_type: The type of the element to delete ('Project', 'Repository', 'Task', 'Subtask').
         :param element_id: The ID of the element to delete.
-        :return: A dictionary with a message indicating success or an HTTPException if the element is not found or an error occurs.
+        :return: A dict indicating success or an HTTPException if the element is not found or an error occurs.
         """
         try:
             element_class = globals().get(element_type)
@@ -136,7 +137,7 @@ class DBConnection:
             repository.project = project  # Associate the repository with the project
             self.session.add(repository)
 
-            # Create Task instances and associate them with the repository
+            # Create Task objects and associate them with the repository
             for task_data in tasks_data:
                 subtasks_data = task_data.pop("subtasks", [])
 
@@ -144,7 +145,7 @@ class DBConnection:
                 task.repository = repository  # Associate the task with the repository
                 self.session.add(task)
 
-                # Create Subtask instances and associate them with the task
+                # Create Subtask objects and associate them with the task
                 for subtask_data in subtasks_data:
                     subtask = Subtask(**subtask_data)
                     subtask.task = task  # Associate the subtask with the task
@@ -154,8 +155,8 @@ class DBConnection:
         """
         Adds a project to the database using the provided project data.
 
-        :param project_data: A dictionary containing the project data, including repositories, tasks, and subtasks.
-        :return: A dictionary with a message indicating success and the ID of the added project or an HTTPException if an error occurs.
+        :param project_data: A dict containing the project, with repositories, tasks, and subtasks.
+        :return: A dict indicating success and the ID of the added project or an HTTPException if an error occurs.
         """
         try:
             # Extract project information
@@ -166,7 +167,7 @@ class DBConnection:
             project = Project(**project_info)
             self.session.add(project)
 
-            # Create Repository instances and associate them with the project
+            # Create Repository objects and associate them with the project
             self.create_project_children(repositories_data, project)
 
             # Commit to the database
@@ -181,11 +182,11 @@ class DBConnection:
 
     def overwrite_project_by_id(self, project_id, new_project_data):
         """
-        Overwrites a project with a new project dictionary by its ID.
+        Overwrites a project with a new project dict by its ID.
 
         :param project_id: The ID of the project to overwrite.
-        :param new_project_data: A dictionary containing the new project data.
-        :return: A dictionary with a message indicating success or an HTTPException if the project is not found or an error occurs.
+        :param new_project_data: A dict containing the new project data.
+        :return: A dict indicating success and the ID of the overwritten project or an HTTPException if an error occurs.
         """
         try:
             # Query for the existing project
@@ -200,9 +201,10 @@ class DBConnection:
                 new_repositories_data = new_project_info.pop("repositories", [])
 
                 # Update the existing project with new information
+                # if the new-project does not have a name, it keeps the old one
                 project.name = new_project_info.get("name", project.name)
 
-                # Create new Repository instances and associate them with the project
+                # Create new Repository objects and associate them with the project
                 self.create_project_children(new_repositories_data, project)
 
                 # Commit to the database
