@@ -30,12 +30,7 @@ class ProjectPydantic(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
-
-
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
+    return {"message": "listify_api"}
 
 
 # ---- CREATE
@@ -48,6 +43,12 @@ async def upload_project(project: ProjectPydantic):
 @app.get("/get/project/{id}")
 async def get_project(id: int):
     return db.get_project_dict_by_id(id)
+
+
+# --- UPDATE
+@app.post("/update/project/{id}")
+async def update_project(project: ProjectPydantic, id: int):
+    return db.overwrite_project_by_id(id, project.dict())
 
 
 # ---- DELETE

@@ -10,7 +10,7 @@ class Project(Base):
     __tablename__ = 'project'
     project_id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255))
-    repositories = relationship('Repository', back_populates='project')
+    repositories = relationship('Repository', back_populates='project', cascade='all, delete-orphan')
 
 
 class Repository(Base):
@@ -18,7 +18,7 @@ class Repository(Base):
     repository_id = Column(Integer, primary_key=True, autoincrement=True)
     project_id = Column(Integer, ForeignKey('project.project_id'))
     name = Column(String(255))
-    tasks = relationship('Task', back_populates='repository')
+    tasks = relationship('Task', back_populates='repository', cascade='all, delete-orphan')
     project = relationship('Project', back_populates='repositories')
 
 
@@ -28,7 +28,7 @@ class Task(Base):
     repository_id = Column(Integer, ForeignKey('repository.repository_id'))
     name = Column(String(255))
     completed = Column(Boolean)
-    subtasks = relationship('Subtask', back_populates='task')
+    subtasks = relationship('Subtask', back_populates='task', cascade='all, delete-orphan')
     repository = relationship('Repository', back_populates='tasks')
 
 
@@ -155,6 +155,59 @@ class DBConnection:
         except Exception as e:
             self.session.rollback()
             return HTTPException(status_code=500, detail=f"Error adding project: {e}")
+
+    def overwrite_project_by_id(self, project_id, new_project_data):
+        """
+        Overwrites a project with a new project dictionary by its ID.
+
+        :param project_id: The ID of the project to overwrite.
+        :param new_project_data: A dictionary containing the new project data.
+        :return: A dictionary with a message indicating success or an HTTPException if the project is not found or an error occurs.
+        """
+        try:
+            # Query for the existing project
+            project = self.session.query(Project).get(project_id)
+
+            if project:
+                # Clear existing relationships
+                project.repositories = []
+
+                # Extract new project information
+                new_project_info = new_project_data.copy()
+                new_repositories_data = new_project_info.pop("repositories", [])
+
+                # Update the existing project with new information
+                project.name = new_project_info.get("name", project.name)
+
+                # Create new Repository instances and associate them with the project
+                for new_repository_data in new_repositories_data:
+                    new_tasks_data = new_repository_data.pop("tasks", [])
+
+                    new_repository = Repository(**new_repository_data)
+                    new_repository.project = project  # Associate the new repository with the project
+                    self.session.add(new_repository)
+
+                    # Create new Task instances and associate them with the new repository
+                    for new_task_data in new_tasks_data:
+                        new_subtasks_data = new_task_data.pop("subtasks", [])
+
+                        new_task = Task(**new_task_data)
+                        new_task.repository = new_repository  # Associate the new task with the new repository
+                        self.session.add(new_task)
+
+                        # Create new Subtask instances and associate them with the new task
+                        for new_subtask_data in new_subtasks_data:
+                            new_subtask = Subtask(**new_subtask_data)
+                            new_subtask.task = new_task  # Associate the new subtask with the new task
+                            self.session.add(new_subtask)
+
+                self.session.commit()
+                return {"message": f"Project with ID {project_id} overwritten successfully"}
+            else:
+                return HTTPException(status_code=404, detail=f"Project with ID {project_id} not found")
+        except Exception as e:
+            self.session.rollback()
+            return HTTPException(status_code=500, detail=f"Error overwriting project: {e}")
 
     def session_close(self):
         """

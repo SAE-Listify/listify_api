@@ -39,13 +39,13 @@ POST http://127.0.0.1:8000/upload/project
 Content-Type: application/json
 
 {
-        "name": "TheProject",
+        "name": "ThePostProject",
         "repositories": [
             {
-                "name": "Repo1",
+                "name": "Repo1Post",
                 "tasks": [
                     {
-                        "name": "Task1",
+                        "name": "Task1Post",
                         "completed": true,
                         "subtasks": [
                             {"name": "Subtask1", "completed": true},
@@ -53,7 +53,7 @@ Content-Type: application/json
                         ]
                     },
                     {
-                        "name": "Task2",
+                        "name": "Task2Post",
                         "completed": true,
                         "subtasks": [
                             {"name": "Subtask1", "completed": true}
@@ -62,6 +62,26 @@ Content-Type: application/json
                 ]
             }
         ]
+    }
+
+###
+
+POST http://127.0.0.1:8000/upload/project
+Content-Type: application/json
+
+{
+        "name": "ThePostEmptyProject",
+        "repositories": []
+    }
+
+###
+
+POST http://127.0.0.1:8000/update/project/5
+Content-Type: application/json
+
+{
+        "name": "TheReplacedEmptyProject",
+        "repositories": []
     }
 
 ###
