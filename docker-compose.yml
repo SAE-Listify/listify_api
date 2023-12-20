@@ -1,0 +1,26 @@
+version: '3'
+services:
+  mariadb:
+    image: mariadb:latest
+    environment:
+      # using root here is a bad idea, but I can't get another account to work
+      # it'll then stay as is for now (forever)
+      MYSQL_ROOT_PASSWORD: toto
+      MYSQL_DATABASE: listify_bdd
+    volumes:
+      - ./listify.sql:/docker-entrypoint-initdb.d/init.sql
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - mariadb
+    ports:
+      - "8000:8000"
+    environment:
+      DB_HOST: mariadb
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: toto
+      DB_NAME: listify_bdd
