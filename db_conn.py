@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, ForeignKey, Date
 from sqlalchemy.orm import declarative_base, Session, relationship
 from fastapi import HTTPException
 
@@ -28,6 +28,9 @@ class Task(Base):
     repository_id = Column(Integer, ForeignKey('repository.repository_id'))
     name = Column(String(255))
     completed = Column(Boolean)
+    priority = Column(String(255))
+    due_date = Column(Date)
+    assignee = Column(String(255))
     subtasks = relationship('Subtask', back_populates='task', cascade='all, delete-orphan')
     repository = relationship('Repository', back_populates='tasks')
 
@@ -94,7 +97,14 @@ class DBConnection:
             for repository in project.repositories:
                 repository_dict = {'name': repository.name, 'tasks': []}
                 for task in repository.tasks:
-                    task_dict = {'name': task.name, 'completed': task.completed, 'subtasks': []}
+                    task_dict = {
+                        'name': task.name,
+                        'completed': task.completed,
+                        'priority': task.priority,
+                        'assignee': task.assignee,
+                        'due_date': task.due_date,
+                        'subtasks': []
+                    }
                     for subtask in task.subtasks:
                         subtask_dict = {'name': subtask.name, 'completed': subtask.completed}
                         task_dict['subtasks'].append(subtask_dict)

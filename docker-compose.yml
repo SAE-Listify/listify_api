@@ -5,8 +5,10 @@ services:
     environment:
       # using root here is a bad idea, but I can't get another account to work
       # it'll then stay as is for now (forever)
-      MYSQL_ROOT_PASSWORD: toto
+      MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: listify_bdd
+      MYSQL_USER: listify_backend
+      MYSQL_PASSWORD: toto
     volumes:
       - ./listify.sql:/docker-entrypoint-initdb.d/init.sql
 
@@ -22,5 +24,5 @@ services:
       DB_HOST: mariadb
       DB_PORT: 3306
       DB_USER: root
-      DB_PASSWORD: toto
+      DB_PASSWORD: root
       DB_NAME: listify_bdd

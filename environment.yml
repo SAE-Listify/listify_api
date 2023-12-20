@@ -6,4 +6,4 @@ dependencies:
   - fastapi=0.105.0
   - uvicorn=0.20.0
   - sqlalchemy=2.0.21
-  - mysqlclient=1.0.2
+  - mysqlclient=2.0.3

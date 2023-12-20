@@ -1,9 +1,11 @@
 from fastapi import FastAPI, HTTPException
 from db_conn import DBConnection
 from pydantic import BaseModel
+from os import environ
+from datetime import date
 
 app = FastAPI()
-db = DBConnection("mysql://root:vm@vm.lan/listify_bdd")
+db = DBConnection(f"mysql://{environ.get('DB_USER')}:{environ.get('DB_PASSWORD')}@{environ.get('DB_HOST')}/{environ.get('DB_NAME')}")
 
 
 # Base Models for create & update
@@ -15,6 +17,9 @@ class SubtaskPydantic(BaseModel):
 class TaskPydantic(BaseModel):
     name: str
     completed: bool
+    priority: str
+    assignee: str
+    due_date: date
     subtasks: list[SubtaskPydantic] = []
 
 
