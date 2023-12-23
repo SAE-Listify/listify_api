@@ -3,6 +3,7 @@ from db_conn import DBConnection
 from pydantic import BaseModel
 from os import environ
 from datetime import date
+from typing import Optional
 
 app = FastAPI()
 db = DBConnection(f"mysql://{environ.get('DB_USER')}:{environ.get('DB_PASSWORD')}@{environ.get('DB_HOST')}/{environ.get('DB_NAME')}")
@@ -18,8 +19,8 @@ class TaskPydantic(BaseModel):
     name: str
     completed: bool
     priority: str
-    assignee: str
-    due_date: date
+    assignee: Optional[str] = None
+    due_date: Optional[date] = None
     subtasks: list[SubtaskPydantic] = []
 
 
