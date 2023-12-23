@@ -31,8 +31,8 @@ create table if not exists task
     name          varchar(255) not null,
     completed     tinyint(1)   not null,
     priority      varchar(255) not null,
-    due_date      date         not null,
-    assignee      varchar(255) not null,
+    due_date      date,
+    assignee      varchar(255),
     constraint repository_id
         foreign key (repository_id) references repository (repository_id)
             on update cascade on delete cascade
