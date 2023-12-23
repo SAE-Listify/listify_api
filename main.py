@@ -8,7 +8,7 @@ app = FastAPI()
 db = DBConnection(f"mysql://{environ.get('DB_USER')}:{environ.get('DB_PASSWORD')}@{environ.get('DB_HOST')}/{environ.get('DB_NAME')}")
 
 
-# Base Models for create & update
+# Base Models for create & update.
 class SubtaskPydantic(BaseModel):
     name: str
     completed: bool
