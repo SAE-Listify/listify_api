@@ -9,3 +9,4 @@ Once it has been built, run it with:
 ```
 sudo docker-compose up
 ```
+NOTE: FastAPI container might run before the MariaDB container, if so, restart everything using the command above.
